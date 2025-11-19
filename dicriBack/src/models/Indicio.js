@@ -1,4 +1,3 @@
-// src/models/Indicio.js
 module.exports = (sequelize, DataTypes) => {
   const Indicio = sequelize.define('Indicio', {
     descripcion: {

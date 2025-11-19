@@ -27,7 +27,7 @@ export default function ExpedienteDetail({ id, user, onUpdated }) {
 
   const estado = expediente.estado.toLowerCase();
 
-  // ================= PERMISOS SEGÚN ESTADO ==================
+  // ================= PERMISOS SEGUN ESTADO ==================
   const puedeAgregarIndicios = estado === "en_registro";
   const puedePasarRevision = user.role !== "coordinador" && estado === "en_registro";
   const puedeAprobarRechazar = user.role === "coordinador" && estado === "revision";

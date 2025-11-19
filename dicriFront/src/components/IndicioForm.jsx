@@ -10,9 +10,27 @@ export default function IndicioForm({ expedienteId, onCreated, token, disabled =
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const validarDatos = () => {
+    if (!descripcion.trim()) return "La descripción es obligatoria";
+    if (!color.trim()) return "El color es obligatorio";
+    if (!tamano.trim()) return "El tamaño es obligatorio";
+    if (!ubicacion.trim()) return "La ubicación es obligatoria";
+
+    const pesoNum = parseFloat(peso);
+    if (!peso || isNaN(pesoNum) || pesoNum <= 0) return "El peso debe ser un número mayor a 0";
+
+    return null;
+  };
+
   const submit = async (e) => {
     e.preventDefault();
     if (disabled) return;
+
+    const mensajeError = validarDatos();
+    if (mensajeError) {
+      setError(mensajeError);
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -25,7 +43,7 @@ export default function IndicioForm({ expedienteId, onCreated, token, disabled =
           descripcion,
           color,
           tamano,
-          peso: peso ? parseFloat(peso) : null,
+          peso: parseFloat(peso),
           ubicacion,
         },
         {
@@ -35,6 +53,7 @@ export default function IndicioForm({ expedienteId, onCreated, token, disabled =
         }
       );
 
+      // Limpiar campos
       setDescripcion("");
       setColor("");
       setTamano("");
@@ -55,7 +74,7 @@ export default function IndicioForm({ expedienteId, onCreated, token, disabled =
       <h4>Nuevo Indicio</h4>
 
       <textarea
-        placeholder="Descripción"
+        placeholder="Descripción detallada del indicio"
         value={descripcion}
         disabled={disabled}
         onChange={(e) => setDescripcion(e.target.value)}
@@ -64,38 +83,43 @@ export default function IndicioForm({ expedienteId, onCreated, token, disabled =
 
       <input
         type="text"
-        placeholder="Color"
+        placeholder="Color (ej: Rojo, Azul)"
         value={color}
         disabled={disabled}
         onChange={(e) => setColor(e.target.value)}
+        required
       />
 
       <input
         type="text"
-        placeholder="Tamaño"
+        placeholder="Tamaño (ej: 10x20cm)"
         value={tamano}
         disabled={disabled}
         onChange={(e) => setTamano(e.target.value)}
+        required
       />
 
       <input
         type="number"
         step="0.01"
-        placeholder="Peso"
+        placeholder="Peso en gramos (ej: 120.5)"
         value={peso}
         disabled={disabled}
         onChange={(e) => setPeso(e.target.value)}
+        required
+        min="0.01"
       />
 
       <input
         type="text"
-        placeholder="Ubicación"
+        placeholder="Ubicación del hallazgo"
         value={ubicacion}
         disabled={disabled}
         onChange={(e) => setUbicacion(e.target.value)}
+        required
       />
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <p style={{ color: "red", fontWeight: "bold" }}>{error}</p>}
 
       <button type="submit" disabled={loading || disabled}>
         {loading ? "Agregando..." : "Agregar indicio"}

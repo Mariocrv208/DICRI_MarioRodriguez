@@ -1,7 +1,6 @@
-// backend/controllers/dashboardController.js
 const { getPool, sql } = require('../services/db.service');
 
-// 1. Cantidad de expedientes por estado
+//Cantidad de expedientes por estado
 const getExpedientesEstado = async (req, res, next) => {
   try {
     const pool = await getPool();
@@ -12,7 +11,7 @@ const getExpedientesEstado = async (req, res, next) => {
   }
 };
 
-// 2. Cantidad de indicios por expediente
+//Cantidad de indicios por expediente
 const getIndiciosPorExpediente = async (req, res, next) => {
   try {
     const pool = await getPool();
@@ -23,7 +22,7 @@ const getIndiciosPorExpediente = async (req, res, next) => {
   }
 };
 
-// 3. Cantidad de expedientes por usuario (técnicos)
+//Cantidad de expedientes por usuario (técnicos)
 const getExpedientesPorUsuario = async (req, res, next) => {
   try {
     const pool = await getPool();
@@ -34,7 +33,7 @@ const getExpedientesPorUsuario = async (req, res, next) => {
   }
 };
 
-// 4. Cantidad de expedientes aprobados/rechazados por coordinador
+//Cantidad de expedientes aprobados/rechazados por coordinador
 const getExpedientesPorCoordinador = async (req, res, next) => {
   try {
     const pool = await getPool();
@@ -45,7 +44,7 @@ const getExpedientesPorCoordinador = async (req, res, next) => {
   }
 };
 
-// 5. Cantidad de expedientes ingresados por mes (máx 4 meses, filtro opcional)
+//Cantidad de expedientes ingresados por mes (máx 4 meses)
 const getExpedientesPorMes = async (req, res, next) => {
   try {
     const pool = await getPool();

@@ -265,3 +265,49 @@ BEGIN
     GROUP BY u.nombre;
 END
 GO
+
+
+CREATE PROCEDURE dicri.sp_ActualizarEstadoExpediente
+    @expediente_id INT,
+    @nuevo_estado NVARCHAR(20),
+    @coordinador_id INT,
+    @razon_rechazo NVARCHAR(500) = NULL
+AS
+BEGIN
+    UPDATE dicri.Expediente
+    SET estado = @nuevo_estado,
+        razon_rechazo = @razon_rechazo,
+        coordinador_id = @coordinador_id,
+        actualizado_en = SYSUTCDATETIME()
+    WHERE id = @expediente_id;
+END
+GO
+
+USE dicri_db;
+GO
+
+-- ALTER para que acepte coordinador_id (manteniendo parámetros previos).
+ALTER PROCEDURE dicri.usp_UpdateExpedienteEstado
+  @expediente_id INT,
+  @nuevo_estado NVARCHAR(20),
+  @razon_rechazo NVARCHAR(500) = NULL,
+  @actualizado_por INT = NULL,
+  @coordinador_id INT = NULL    -- nuevo parámetro opcional
+AS
+BEGIN
+  SET NOCOUNT ON;
+
+  UPDATE dicri.Expediente
+  SET estado = @nuevo_estado,
+      razon_rechazo = @razon_rechazo,
+      actualizado_en = SYSUTCDATETIME(),
+      -- Si se pasa coordinador_id lo setea, si no, conserva el valor actual
+      coordinador_id = COALESCE(@coordinador_id, coordinador_id)
+  WHERE id = @expediente_id;
+
+  SELECT @@ROWCOUNT AS rows;
+END;
+GO
+
+
+

@@ -1,4 +1,3 @@
-// src/pages/Indicios.jsx
 import { useEffect, useState } from "react";
 import api from "../services/api";
 
@@ -9,7 +8,7 @@ export default function Indicios() {
   const [token, setToken] = useState("");
   const [searchCodigo, setSearchCodigo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 5;
 
   // Cargar todos los indicios
   const loadIndicios = async () => {
@@ -24,7 +23,7 @@ export default function Indicios() {
     }
   };
 
-  // Filtrar por código de expediente
+  // Filtrar por codigo de expediente
   const handleSearch = async () => {
     try {
         let url = "/indicios";
@@ -47,7 +46,7 @@ export default function Indicios() {
     setSelectedIndicio(indicio);
   };
 
-  // Paginación
+  // Paginacion
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredIndicios.slice(indexOfFirstItem, indexOfLastItem);
@@ -64,10 +63,37 @@ export default function Indicios() {
     if (token) loadIndicios();
   }, [token]);
 
+  // ELIMINAR INDICIO
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm(
+      "¿Estás seguro de eliminar este indicio? Esta acción es permanente."
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await api.delete(`/indicios/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Remover del estado
+      setIndicios((prev) => prev.filter((i) => i.id !== id));
+      setFilteredIndicios((prev) => prev.filter((i) => i.id !== id));
+
+      // Si estaba seleccionado, limpiar
+      if (selectedIndicio?.id === id) setSelectedIndicio(null);
+
+      alert("Indicio eliminado correctamente.");
+    } catch (err) {
+      console.error(err);
+      alert("Error al eliminar indicio.");
+    }
+  };
+
   return (
     <div className="content-centered gap-4" style={{ padding: "2rem" }}>
       {/* Filtro de búsqueda */}
-      <div className="card" style={{ width: "80%", padding: "1rem" }}>
+      <div className="card" style={{ width: "90%", padding: "1rem" }}>
         <h3>Filtrar Indicios por Código de Expediente</h3>
         <div style={{ display: "flex", gap: "1rem", marginTop: "0.5rem" }}>
           <input
@@ -94,7 +120,7 @@ export default function Indicios() {
       </div>
 
       {/* Tabla de indicios */}
-      <div className="card" style={{ width: "80%", overflowX: "auto", padding: "1rem", boxShadow: "0 4px 8px rgba(0,0,0,0.1)" }}>
+      <div className="card" style={{ width: "90%", overflowX: "auto", padding: "1rem", boxShadow: "0 4px 8px rgba(0,0,0,0.1)" }}>
         <h3 style={{ textAlign: "center", marginBottom: "1rem" }}>Listado de Indicios</h3>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
@@ -102,6 +128,7 @@ export default function Indicios() {
               <th style={{ padding: "0.7rem", textAlign: "left" }}>Expediente / Indicio</th>
               <th style={{ padding: "0.7rem", textAlign: "left" }}>Descripción</th>
               <th style={{ padding: "0.7rem", textAlign: "left" }}>Técnico</th>
+              <th style={{ padding: "0.7rem" }}>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -122,12 +149,31 @@ export default function Indicios() {
                 </td>
                 <td style={{ padding: "0.7rem" }}>{i.descripcion}</td>
                 <td style={{ padding: "0.7rem" }}>{i.tecnico_nombre}</td>
+                {/* BTN ELIMINAR */}
+                <td style={{ padding: "0.7rem" }}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // evita que seleccione al dar click
+                      handleDelete(i.id);
+                    }}
+                    style={{
+                      backgroundColor: "#b91c1c",
+                      color: "#fff",
+                      padding: "0.4rem 0.8rem",
+                      border: "none",
+                      borderRadius: "5px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Eliminar
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
 
-        {/* Paginación */}
+        {/* Paginacion */}
         <div style={{ marginTop: "1rem", display: "flex", justifyContent: "center", gap: "0.5rem" }}>
           {Array.from({ length: totalPages }, (_, idx) => (
             <button
@@ -150,7 +196,7 @@ export default function Indicios() {
 
       {/* Detalle del indicio */}
       {selectedIndicio && (
-        <div className="card" style={{ width: "80%", padding: "1rem", marginTop: "1rem", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+        <div className="card" style={{ width: "90%", padding: "1rem", marginTop: "1rem", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
           <h3>Detalle del Indicio</h3>
           <p><strong>ID:</strong> {selectedIndicio.id}</p>
           <p><strong>Expediente:</strong> {selectedIndicio.expediente_codigo}</p>

@@ -53,8 +53,8 @@
   padding: 1.5rem;
   overflow-y: auto;
   display: flex;
-  justify-content: center;   /* ⬅ centra horizontal */
-  align-items: flex-start;    /* ⬅ deja espacio arriba pero centrado */
+  justify-content: center;   
+  align-items: flex-start;   
 }
 
 

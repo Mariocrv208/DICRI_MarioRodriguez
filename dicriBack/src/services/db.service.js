@@ -1,4 +1,3 @@
-// src/services/db.service.js
 const sql = require('mssql/msnodesqlv8');
 const dotenv = require('dotenv');
 dotenv.config();
@@ -8,7 +7,7 @@ const config = {
   server: process.env.DB_HOST,
   driver: "msnodesqlv8",
   options: {
-    trustedConnection: true,  // ✔ Windows Authentication
+    trustedConnection: true,  // Windows Authentication
   }
 };
 

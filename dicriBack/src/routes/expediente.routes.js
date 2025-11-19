@@ -14,7 +14,7 @@ router.put('/:id/revision', auth.verifyToken, expedienteController.submitForRevi
 router.put('/:id/approve', auth.verifyToken, expedienteController.approveExpediente);
 router.put('/:id/reject', auth.verifyToken, expedienteController.rejectExpediente);
 
-// ruta opcional: updateRevision (si la necesitas)
+// ruta opcional: updateRevision
 router.put('/:id/update-revision', auth.verifyToken, expedienteController.updateRevision);
 
 module.exports = router;

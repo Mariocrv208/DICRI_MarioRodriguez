@@ -6,7 +6,10 @@ import ExpedienteDetail from "../components/ExpedienteDetail";
 export default function Expedientes() {
   const [expedientes, setExpedientes] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
-  const [user, setUser] = useState(null); // Usuario logeado
+  const [user, setUser] = useState(null);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const loadExpedientes = async () => {
     try {
@@ -15,12 +18,15 @@ export default function Expedientes() {
 
       if (res.data.user) setUser(res.data.user);
 
-      // ⛔ Filtrar si el usuario es coordinador
+      // Coordinador filtra distintos expedientes
       if (res.data.user?.role === "coordinador") {
         data = data.filter(exp => exp.estado !== "en_registro");
+      } else {
+        data = data.filter(exp => exp.estado === "en_registro");
       }
 
       setExpedientes(data);
+      setCurrentPage(1); 
     } catch (err) {
       console.error("Error al cargar expedientes:", err);
     }
@@ -30,47 +36,46 @@ export default function Expedientes() {
     loadExpedientes();
   }, []);
 
-  // Color de fila según estado (sólido, sin aclarado)
+  // Calculo de paginación
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = expedientes.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(expedientes.length / itemsPerPage);
+
+  const paginate = (page) => setCurrentPage(page);
+
+  // ESTILOS
   const getRowStyle = (exp) => {
-    let background = "#d3d1ddff"; // por defecto para EN_REGISTRO
+    let background = "#d3d1ddff";
     switch (exp.estado) {
-      case "revision":
-        background = "#FFD700"; // amarillo sólido
-        break;
-      case "aprobado":
-        background = "#008000"; // verde sólido
-        break;
-      case "rechazado":
-        background = "#FF0000"; // rojo sólido
-        break;
+      case "revision": background = "#FFD700"; break;
+      case "aprobado": background = "#008000"; break;
+      case "rechazado": background = "#FF0000"; break;
     }
+
     return {
       background,
       cursor: "pointer",
       transition: "0.2s",
       outline: selectedId === exp.id ? "2px solid #3B82F6" : "none",
-      color: exp.estado === "aprobado" || exp.estado === "rechazado" ? "#fff" : "#000", // contraste para texto
+      color: exp.estado === "aprobado" || exp.estado === "rechazado" ? "#fff" : "#000",
     };
   };
 
   const getEstadoTexto = (estado) => {
     switch (estado) {
-      case "EN_REGISTRO":
-        return "En registro";
-      case "revision":
-        return "En revisión";
-      case "aprobado":
-        return "Aprobado";
-      case "rechazado":
-        return "Rechazado";
-      default:
-        return estado;
+      case "EN_REGISTRO": return "En registro";
+      case "revision": return "En revisión";
+      case "aprobado": return "Aprobado";
+      case "rechazado": return "Rechazado";
+      default: return estado;
     }
   };
 
   return (
     <div style={{ display: "flex", gap: "1rem", padding: "2rem", height: "100%" }}>
-      {/* IZQUIERDA: Crear y listar expedientes */}
+      
+      {/* LISTADO IZQUIERDO */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "1rem" }}>
         <ExpedienteForm onCreated={loadExpedientes} />
 
@@ -95,8 +100,9 @@ export default function Expedientes() {
                 <th style={{ padding: "0.7rem", textAlign: "left" }}>Estado</th>
               </tr>
             </thead>
+
             <tbody>
-              {expedientes.map((exp) => (
+              {currentItems.map((exp) => (
                 <tr
                   key={exp.id}
                   onClick={() => setSelectedId(exp.id)}
@@ -108,15 +114,38 @@ export default function Expedientes() {
                     <strong>{exp.codigo_unico}</strong>
                     <p style={{ fontSize: "0.85rem" }}>{exp.descripcion}</p>
                   </td>
-                  <td style={{ padding: "0.7rem", fontWeight: "600" }}>{getEstadoTexto(exp.estado)}</td>
+                  <td style={{ padding: "0.7rem", fontWeight: "600" }}>
+                    {getEstadoTexto(exp.estado)}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
+
+          {/* PAGINACION */}
+          <div style={{ marginTop: "1rem", display: "flex", justifyContent: "center", gap: "0.5rem" }}>
+            {Array.from({ length: totalPages }, (_, idx) => (
+              <button
+                key={idx + 1}
+                onClick={() => paginate(idx + 1)}
+                style={{
+                  padding: "0.4rem 0.8rem",
+                  borderRadius: "5px",
+                  border: "1px solid #ccc",
+                  backgroundColor: currentPage === idx + 1 ? "#1f2937" : "#fff",
+                  color: currentPage === idx + 1 ? "#fff" : "#000",
+                  cursor: "pointer",
+                }}
+              >
+                {idx + 1}
+              </button>
+            ))}
+          </div>
+
         </div>
       </div>
 
-      {/* DERECHA: Detalle del expediente */}
+      {/* PANEL DERECHO */}
       <div style={{ flex: 1 }}>
         {selectedId && user ? (
           <ExpedienteDetail

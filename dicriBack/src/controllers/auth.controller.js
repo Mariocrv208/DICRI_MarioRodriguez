@@ -1,4 +1,3 @@
-// src/controllers/auth.controller.js
 const { getPool, sql } = require('../services/db.service');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -11,7 +10,7 @@ exports.login = async (req, res, next) => {
 
     const pool = await getPool();
     const result = await pool.request()
-      .input('correo', sql.NVarChar(150), correo) // coincide con NVARCHAR(150)
+      .input('correo', sql.NVarChar(150), correo) 
       .query(`
         SELECT id, nombre, correo, password_hash, rol 
         FROM dicri.Usuario 
@@ -24,7 +23,6 @@ exports.login = async (req, res, next) => {
 
     const user = result.recordset[0];
 
-    // Convertimos el hash a string limpio
     const hash = user.password_hash.toString('utf8').trim();
 
     const match = await bcrypt.compare(password, hash);

@@ -1,11 +1,9 @@
-/* RESET */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/* Solo dejamos configuración neutral */
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
 }

@@ -74,7 +74,7 @@ exports.getIndicioById = async (req, res, next) => {
 // Listar todos los indicios
 exports.getIndicios = async (req, res) => {
   try {
-    const { expedienteCodigo } = req.query; // Recibimos código de expediente si viene
+    const { expedienteCodigo } = req.query; 
     const pool = await getPool();
     let result;
 
@@ -94,3 +94,22 @@ exports.getIndicios = async (req, res) => {
   }
 };
 
+exports.deleteIndicio = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const pool = await getPool();
+
+    const result = await pool.request()
+      .input("indicioId", sql.Int, id)
+      .query(`DELETE FROM dicri.Indicio WHERE id = @indicioId`);
+
+    if (result.rowsAffected[0] === 0) {
+      return res.status(404).json({ message: "Indicio no encontrado" });
+    }
+
+    res.json({ message: "Indicio eliminado correctamente" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error al eliminar indicio" });
+  }
+};

@@ -1,4 +1,3 @@
-// src/utils/generarHash.js
 const bcrypt = require('bcrypt');
 
 /**
@@ -15,6 +14,6 @@ async function generarHash(password) {
 }
 
 // Cambia esta contraseña por la que quieras generar
-const password = 'password123';
+const password = 'extremobase';
 
 generarHash(password);

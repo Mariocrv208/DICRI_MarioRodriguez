@@ -126,5 +126,26 @@ ALTER TABLE dicri.Expediente
 ADD CONSTRAINT FK_Expediente_Coordinador FOREIGN KEY (coordinador_id)
 REFERENCES dicri.Usuario(id);
 
-ALTER TABLE dicri.Expediente
-ADD coordinador_id INT NULL;
+
+ALTER PROCEDURE dicri.usp_InsertExpediente 
+    @codigo_unico NVARCHAR(50),
+    @descripcion NVARCHAR(500),
+    @tecnico_id INT
+AS
+BEGIN
+    -- VALIDAR DUPLICADO
+    IF EXISTS (SELECT 1 FROM dicri.Expediente WHERE codigo_unico = @codigo_unico)
+    BEGIN
+        RAISERROR('EXPEDIENTE_DUPLICADO', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO dicri.Expediente (codigo_unico, descripcion, tecnico_id)
+    VALUES (@codigo_unico, @descripcion, @tecnico_id);
+
+    SELECT SCOPE_IDENTITY() AS expediente_id;
+END
+GO
+
+
+

@@ -1,4 +1,3 @@
-// src/pages/Dashboard.jsx
 import { useEffect, useState } from "react";
 import api from "../services/api";
 import { Bar, Pie } from "react-chartjs-2";
@@ -34,7 +33,6 @@ export default function Dashboard() {
     <div style={{ padding: "2rem", marginTop: "120vh" }}>
       <h2 style={{ marginBottom: "1rem" }}>Dashboard General</h2>
 
-      {/* Contenedor de graficas en cuadrícula */}
       <div
         style={{
           display: "grid",
@@ -42,7 +40,7 @@ export default function Dashboard() {
           gap: "1rem",
         }}
       >
-        {/* 1️⃣ Expedientes por estado */}
+        {/* Expedientes por estado */}
         <div
           className="card"
           style={{
@@ -63,7 +61,7 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* 2️⃣ Indicios por expediente */}
+        {/* Indicios por expediente */}
         <div
           className="card"
           style={{
@@ -86,7 +84,7 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* 3️⃣ Expedientes por usuario */}
+        {/* Expedientes por usuario */}
         <div
           className="card"
           style={{
@@ -108,7 +106,7 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* 4️⃣ Expedientes autorizados/rechazados por coordinador */}
+        {/* Expedientes autorizados/rechazados por coordinador */}
         <div
           className="card"
           style={{
@@ -129,7 +127,7 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* 5️⃣ Expedientes por mes */}
+        {/* Expedientes por mes */}
         <div
           className="card"
           style={{
