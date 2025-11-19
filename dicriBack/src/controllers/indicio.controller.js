@@ -1,4 +1,5 @@
 const { getPool, sql } = require('../services/db.service');
+const schema = process.env.DB_SCHEMA;
 
 // Crear indicio
 exports.createIndicio = async (req, res, next) => {
@@ -15,7 +16,7 @@ exports.createIndicio = async (req, res, next) => {
       .input('peso', sql.Decimal(10, 2), peso || null)
       .input('ubicacion', sql.NVarChar(255), ubicacion || null)
       .input('tecnico_id', sql.Int, tecnico_id)
-      .execute('dicri.usp_InsertIndicio');
+      .execute(`${schema}.usp_InsertIndicio`);
 
     res.status(201).json({ indicio_id: result.recordset[0].indicio_id });
   } catch (err) {
@@ -32,7 +33,7 @@ exports.getAllIndicios = async (req, res) => {
     const request = pool.request();
     if (expedienteId) request.input('expedienteId', sql.Int, expedienteId);
 
-    const result = await request.execute('dicri.usp_GetIndicios');
+    const result = await request.execute(`${schema}.usp_GetIndicios`);
 
     res.json(result.recordset);
   } catch (err) {
@@ -49,7 +50,7 @@ exports.getIndicioById = async (req, res, next) => {
 
     const result = await pool.request()
       .input('indicioId', sql.Int, id)
-      .execute('dicri.usp_GetIndicioById');
+      .execute(`${schema}.usp_GetIndicioById`);
 
     if (!result.recordset[0]) return res.status(404).json({ message: 'Indicio no encontrado' });
 
@@ -81,10 +82,10 @@ exports.getIndicios = async (req, res) => {
     if (expedienteCodigo) {
       result = await pool.request()
         .input('expediente_codigo', sql.NVarChar(50), expedienteCodigo)
-        .execute('dicri.usp_GetIndiciosByExpediente');
+        .execute(`${schema}.usp_GetIndiciosByExpediente`);
     } else {
       result = await pool.request()
-        .execute('dicri.usp_GetAllIndicios');
+        .execute(`${schema}.usp_GetAllIndicios`);
     }
 
     res.json(result.recordset);
@@ -101,7 +102,7 @@ exports.deleteIndicio = async (req, res) => {
 
     const result = await pool.request()
       .input("indicioId", sql.Int, id)
-      .query(`DELETE FROM dicri.Indicio WHERE id = @indicioId`);
+      .execute(`${schema}.usp_DeleteIndicio`);
 
     if (result.rowsAffected[0] === 0) {
       return res.status(404).json({ message: "Indicio no encontrado" });

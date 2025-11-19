@@ -7,15 +7,13 @@ dotenv.config();
 exports.login = async (req, res, next) => {
   try {
     const { correo, password } = req.body;
+    const schema = process.env.DB_SCHEMA;
+    const storedProcedure = `${schema}.sp_ObtenerUsuarioPorCorreo`;
 
     const pool = await getPool();
     const result = await pool.request()
-      .input('correo', sql.NVarChar(150), correo) 
-      .query(`
-        SELECT id, nombre, correo, password_hash, rol 
-        FROM dicri.Usuario 
-        WHERE correo = @correo
-      `);
+      .input('correo', sql.NVarChar(150), correo)
+      .execute(storedProcedure);
 
     if (!result.recordset.length) {
       return res.status(401).json({ message: "Credenciales inválidas" });

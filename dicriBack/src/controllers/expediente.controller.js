@@ -1,4 +1,5 @@
 const { getPool, sql } = require('../services/db.service');
+const schema = process.env.DB_SCHEMA;
 
 const getUserFromReq = (req) => ({
   id: req.user?.id,
@@ -11,7 +12,7 @@ const getUserFromReq = (req) => ({
 exports.getExpedientesWithUser = async (req, res, next) => {
   try {
     const pool = await getPool();
-    const expedientesResult = await pool.request().execute('dicri.usp_GetExpedientes');
+    const expedientesResult = await pool.request().execute(`${schema}.usp_GetExpedientes`);
 
     res.json({
       expedientes: expedientesResult.recordset.map(e => ({
@@ -44,11 +45,7 @@ exports.createExpediente = async (req, res, next) => {
     // VALIDAR DUPLICADO ANTES DE INSERTAR
     const existe = await pool.request()
       .input("codigo_unico", sql.NVarChar(50), codigo_unico)
-      .query(`
-        SELECT id 
-        FROM dicri.Expediente 
-        WHERE codigo_unico = @codigo_unico;
-      `);
+      .execute(`${schema}.usp_ValidarExpedienteDuplicado`);
 
     if (existe.recordset.length > 0) {
       return res.status(409).json({ message: "El código de expediente ya existe" });
@@ -59,7 +56,7 @@ exports.createExpediente = async (req, res, next) => {
       .input('codigo_unico', sql.NVarChar(50), codigo_unico)
       .input('descripcion', sql.NVarChar(500), descripcion)
       .input('tecnico_id', sql.Int, tecnico_id)
-      .execute('dicri.usp_InsertExpediente');
+      .execute(`${schema}.usp_InsertExpediente`);
 
     res.status(201).json({ expediente_id: result.recordset[0].expediente_id });
 
@@ -78,7 +75,7 @@ exports.getExpedienteWithIndicios = async (req, res, next) => {
     const pool = await getPool();
     const result = await pool.request()
       .input('expediente_id', sql.Int, expediente_id)
-      .execute('dicri.usp_GetExpedienteWithIndicios');
+      .execute(`${schema}.usp_GetExpedienteWithIndicios`);
 
     const expediente = result.recordsets?.[0]?.[0] || null;
     const indicios = result.recordsets?.[1] || [];
@@ -126,7 +123,7 @@ exports.submitForReview = async (req, res, next) => {
       .input('nuevo_estado', sql.NVarChar(20), 'REVISION')
       .input('razon_rechazo', sql.NVarChar(500), null)
       .input('actualizado_por', sql.Int, req.user.id)
-      .execute('dicri.usp_UpdateExpedienteEstado');
+      .execute(`${schema}.usp_UpdateExpedienteEstado`);
 
     res.json({ message: 'Expediente enviado a revisión' });
   } catch (err) {
@@ -138,7 +135,7 @@ exports.submitForReview = async (req, res, next) => {
 const ensureExpedienteEnRevision = async (pool, id) => {
   const estadoResult = await pool.request()
     .input('expediente_id', sql.Int, id)
-    .execute('dicri.usp_GetExpedienteEstado'); // SP que devuelve  estado 
+    .execute(`${schema}.usp_GetExpedienteEstado`); // SP que devuelve  estado 
 
   const estadoActual = estadoResult.recordset?.[0]?.estado;
   return estadoActual ? String(estadoActual).toLowerCase() === 'revision' : false;
@@ -166,7 +163,7 @@ exports.approveExpediente = async (req, res, next) => {
       .input('razon_rechazo', sql.NVarChar(500), null)
       .input('actualizado_por', sql.Int, req.user.id)
       .input('coordinador_id', sql.Int, req.user.id) 
-      .execute('dicri.usp_UpdateExpedienteEstado');
+      .execute(`${schema}.usp_UpdateExpedienteEstado`);
 
     res.json({ message: 'Expediente aprobado.' });
   } catch (err) {
@@ -201,7 +198,7 @@ exports.rejectExpediente = async (req, res, next) => {
       .input('razon_rechazo', sql.NVarChar(500), razon_rechazo)
       .input('actualizado_por', sql.Int, req.user.id)
       .input('coordinador_id', sql.Int, req.user.id)
-      .execute('dicri.usp_UpdateExpedienteEstado');
+      .execute(`${schema}.usp_UpdateExpedienteEstado`);
 
     res.json({ message: 'Expediente rechazado.' });
   } catch (err) {
@@ -220,7 +217,7 @@ exports.updateRevision = async (req, res, next) => {
       .input('expediente_id', sql.Int, id)
       .input('estado', sql.NVarChar(20), estado)
       .input('justificacion', sql.NVarChar(500), justificacion || null)
-      .execute('dicri.usp_UpdateExpedienteRevision');
+      .execute(`${schema}.usp_UpdateExpedienteRevision`);
 
     res.json({ message: 'Expediente actualizado', updated: result.rowsAffected[0] });
   } catch (err) {

@@ -1,10 +1,12 @@
 const { getPool, sql } = require('../services/db.service');
 
+const schema = process.env.DB_SCHEMA;
+
 //Cantidad de expedientes por estado
 const getExpedientesEstado = async (req, res, next) => {
   try {
     const pool = await getPool();
-    const result = await pool.request().execute('dicri.sp_ExpedientesEstado');
+    const result = await pool.request().execute(`${schema}.sp_ExpedientesEstado`);
     res.json(result.recordset);
   } catch (err) {
     next(err);
@@ -15,7 +17,7 @@ const getExpedientesEstado = async (req, res, next) => {
 const getIndiciosPorExpediente = async (req, res, next) => {
   try {
     const pool = await getPool();
-    const result = await pool.request().execute('dicri.sp_IndiciosPorExpediente');
+    const result = await pool.request().execute(`${schema}.sp_IndiciosPorExpediente`);
     res.json(result.recordset);
   } catch (err) {
     next(err);
@@ -26,7 +28,7 @@ const getIndiciosPorExpediente = async (req, res, next) => {
 const getExpedientesPorUsuario = async (req, res, next) => {
   try {
     const pool = await getPool();
-    const result = await pool.request().execute('dicri.sp_ExpedientesPorUsuario');
+    const result = await pool.request().execute(`${schema}.sp_ExpedientesPorUsuario`);
     res.json(result.recordset);
   } catch (err) {
     next(err);
@@ -37,7 +39,7 @@ const getExpedientesPorUsuario = async (req, res, next) => {
 const getExpedientesPorCoordinador = async (req, res, next) => {
   try {
     const pool = await getPool();
-    const result = await pool.request().execute('dicri.sp_ExpedientesPorCoordinador');
+    const result = await pool.request().execute(`${schema}.sp_ExpedientesPorCoordinador`);
     res.json(result.recordset);
   } catch (err) {
     next(err);
@@ -55,7 +57,7 @@ const getExpedientesPorMes = async (req, res, next) => {
       request.input('mes', sql.NVarChar(7), mes);
     }
 
-    const result = await request.execute('dicri.sp_ExpedientesPorMes');
+    const result = await request.execute(`${schema}.sp_ExpedientesPorMes`);
     res.json(result.recordset);
   } catch (err) {
     next(err);
