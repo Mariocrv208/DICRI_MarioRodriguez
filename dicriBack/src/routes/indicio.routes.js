@@ -11,4 +11,6 @@ router.get('/', auth.verifyToken, indicioController.getIndicios);
 // **Nuevo endpoint: obtener detalle de un indicio por ID**
 router.get('/:id', auth.verifyToken, indicioController.getIndicioById);
 
+router.get('/', auth.verifyToken, indicioController.getAllIndicios);
+
 module.exports = router;

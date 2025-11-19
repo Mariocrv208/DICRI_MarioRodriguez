@@ -1,6 +1,6 @@
 const { getPool, sql } = require('../services/db.service');
 
-// Crear indicio (ya lo tienes)
+// Crear indicio
 exports.createIndicio = async (req, res, next) => {
   try {
     const { expediente_id, descripcion, color, tamano, peso, ubicacion } = req.body;
@@ -12,7 +12,7 @@ exports.createIndicio = async (req, res, next) => {
       .input('descripcion', sql.NVarChar(500), descripcion)
       .input('color', sql.NVarChar(100), color || null)
       .input('tamano', sql.NVarChar(100), tamano || null)
-      .input('peso', sql.Decimal(10,2), peso || null)
+      .input('peso', sql.Decimal(10, 2), peso || null)
       .input('ubicacion', sql.NVarChar(255), ubicacion || null)
       .input('tecnico_id', sql.Int, tecnico_id)
       .execute('dicri.usp_InsertIndicio');
@@ -23,34 +23,21 @@ exports.createIndicio = async (req, res, next) => {
   }
 };
 
-// Listar todos los indicios
-exports.getIndicios = async (req, res, next) => {
+// Obtener todos los indicios, opcionalmente filtrando por expediente
+exports.getAllIndicios = async (req, res) => {
   try {
     const pool = await getPool();
-    const result = await pool.request()
-      .query(`
-        SELECT i.*, u.nombre AS tecnico_nombre, e.codigo_unico AS expediente_codigo
-        FROM dicri.Indicio i
-        INNER JOIN dicri.Usuario u ON i.tecnico_id = u.id
-        INNER JOIN dicri.Expediente e ON i.expediente_id = e.id
-        ORDER BY i.fecha_registro DESC
-      `);
+    const { expedienteId } = req.query;
 
-    // Mapear para frontend
-    const indicios = result.recordset.map(i => ({
-      id: i.id,
-      descripcion: i.descripcion,
-      color: i.color,
-      tamano: i.tamaño,
-      peso: i.peso,
-      ubicacion: i.ubicacion,
-      tecnico: { nombre: i.tecnico_nombre },
-      expediente: { codigo_unico: i.expediente_codigo }
-    }));
+    const request = pool.request();
+    if (expedienteId) request.input('expedienteId', sql.Int, expedienteId);
 
-    res.json(indicios);
+    const result = await request.execute('dicri.usp_GetIndicios');
+
+    res.json(result.recordset);
   } catch (err) {
-    next(err);
+    console.error(err);
+    res.status(500).json({ message: "Error al obtener indicios" });
   }
 };
 
@@ -59,15 +46,10 @@ exports.getIndicioById = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id, 10);
     const pool = await getPool();
+
     const result = await pool.request()
-      .input('indicio_id', sql.Int, id)
-      .query(`
-        SELECT i.*, u.nombre AS tecnico_nombre, e.codigo_unico AS expediente_codigo
-        FROM dicri.Indicio i
-        INNER JOIN dicri.Usuario u ON i.tecnico_id = u.id
-        INNER JOIN dicri.Expediente e ON i.expediente_id = e.id
-        WHERE i.id = @indicio_id
-      `);
+      .input('indicioId', sql.Int, id)
+      .execute('dicri.usp_GetIndicioById');
 
     if (!result.recordset[0]) return res.status(404).json({ message: 'Indicio no encontrado' });
 
@@ -76,7 +58,7 @@ exports.getIndicioById = async (req, res, next) => {
       id: i.id,
       descripcion: i.descripcion,
       color: i.color,
-      tamano: i.tamaño,
+      tamano: i.tamano,
       peso: i.peso,
       ubicacion: i.ubicacion,
       tecnico: { nombre: i.tecnico_nombre },
@@ -88,3 +70,27 @@ exports.getIndicioById = async (req, res, next) => {
     next(err);
   }
 };
+
+// Listar todos los indicios
+exports.getIndicios = async (req, res) => {
+  try {
+    const { expedienteCodigo } = req.query; // Recibimos código de expediente si viene
+    const pool = await getPool();
+    let result;
+
+    if (expedienteCodigo) {
+      result = await pool.request()
+        .input('expediente_codigo', sql.NVarChar(50), expedienteCodigo)
+        .execute('dicri.usp_GetIndiciosByExpediente');
+    } else {
+      result = await pool.request()
+        .execute('dicri.usp_GetAllIndicios');
+    }
+
+    res.json(result.recordset);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error al obtener indicios' });
+  }
+};
+

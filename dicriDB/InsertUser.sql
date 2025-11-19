@@ -14,3 +14,10 @@ SELECT * FROM dicri.Usuario;
 UPDATE dicri.Usuario
 SET password_hash = '$2b$10$FTBBbbX2vrDZbr1pcXSm/.gWfRlqXUBCmpuVWqll6g9AYQpBMeT5e'
 WHERE correo = 'tecnico@demo.com';
+
+
+SELECT id, codigo_unico, descripcion
+FROM dicri.Expediente;
+
+SELECT * FROM dicri.Expediente;
+

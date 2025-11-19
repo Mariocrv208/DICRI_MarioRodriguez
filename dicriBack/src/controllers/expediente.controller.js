@@ -1,51 +1,59 @@
+// src/controllers/expediente.controller.js
 const { getPool, sql } = require('../services/db.service');
 
-// Crear expediente
+// Helper para obtener datos del usuario (consistencia)
+const getUserFromReq = (req) => ({
+  id: req.user?.id,
+  nombre: req.user?.nombre,
+  correo: req.user?.correo,
+  role: req.user?.rol || req.user?.role // admite ambos nombres si hay inconsistencia
+});
+
+// LISTAR EXPEDIENTES (usa el SP ya creado)
+exports.getExpedientesWithUser = async (req, res, next) => {
+  try {
+    const pool = await getPool();
+    const expedientesResult = await pool.request().execute('dicri.usp_GetExpedientes');
+
+    res.json({
+      expedientes: expedientesResult.recordset.map(e => ({
+        ...e,
+        estado: e.estado?.toLowerCase()
+      })),
+      user: getUserFromReq(req)
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// CREAR EXPEDIENTE
 exports.createExpediente = async (req, res, next) => {
   try {
     const { codigo_unico, descripcion } = req.body;
     const tecnico_id = req.user.id;
 
     const pool = await getPool();
-
     const result = await pool.request()
       .input('codigo_unico', sql.NVarChar(50), codigo_unico)
       .input('descripcion', sql.NVarChar(500), descripcion)
       .input('tecnico_id', sql.Int, tecnico_id)
       .execute('dicri.usp_InsertExpediente');
 
-    const expediente_id = result.recordset[0].expediente_id;
-    res.status(201).json({ expediente_id });
+    res.status(201).json({ expediente_id: result.recordset[0].expediente_id });
   } catch (err) {
     next(err);
   }
 };
 
-// Listar todos los expedientes
-exports.getExpedientes = async (req, res, next) => {
-  try {
-    const pool = await getPool();
-
-    const result = await pool.request()
-      .query(`
-        SELECT e.id, e.codigo_unico, e.descripcion, e.estado, e.fecha_registro, u.nombre AS tecnico
-        FROM dicri.Expediente e
-        JOIN dicri.Usuario u ON e.tecnico_id = u.id
-        ORDER BY e.fecha_registro DESC
-      `);
-
-    res.json(result.recordset);
-  } catch (err) {
-    next(err);
-  }
-};
-
-// Obtener expediente con indicios
+// OBTENER EXPEDIENTE + INDICIOS
+// OBTENER EXPEDIENTE + INDICIOS (MODIFICADO)
 exports.getExpedienteWithIndicios = async (req, res, next) => {
   try {
-    const expediente_id = parseInt(req.params.id, 10);
-    const pool = await getPool();
+    const expediente_id = Number(req.params.id);
+    const userRole = (req.user?.rol || "").toLowerCase();
 
+    const pool = await getPool();
     const result = await pool.request()
       .input('expediente_id', sql.Int, expediente_id)
       .execute('dicri.usp_GetExpedienteWithIndicios');
@@ -53,21 +61,49 @@ exports.getExpedienteWithIndicios = async (req, res, next) => {
     const expediente = result.recordsets?.[0]?.[0] || null;
     const indicios = result.recordsets?.[1] || [];
 
-    res.json({ expediente, indicios });
+    if (!expediente) return res.status(404).json({ message: "Expediente no encontrado" });
+
+    const estado = String(expediente.estado).toUpperCase();
+
+    // REGLAS DE NEGOCIO
+    const canAddIndicios = !["REVISION", "RECHAZADO", "APROBADO"].includes(estado);
+    const showRejectionReason = estado === "RECHAZADO";
+    const allowCoordinatorActions = (estado === "REVISION" && userRole === "coordinador");
+    const allowUserSubmitReview = (estado !== "REVISION" && userRole !== "coordinador");
+
+    res.json({
+      expediente,
+      indicios,
+
+      // 👇 Nuevos flags para frontend
+      permissions: {
+        canAddIndicios,
+        showRejectionReason,
+        allowCoordinatorActions,
+        allowUserSubmitReview
+      }
+    });
+
   } catch (err) {
     next(err);
   }
 };
 
-// Enviar a revisión
+// ENVIAR A REVISION
+// Solo usuarios que NO sean coordinador pueden ejecutar esta acción.
 exports.submitForReview = async (req, res, next) => {
   try {
-    const expediente_id = parseInt(req.params.id, 10);
+    const userRole = (req.user?.rol || '').toLowerCase();
+    if (userRole === 'coordinador') {
+      return res.status(403).json({ message: 'Los coordinadores no pueden pasar expedientes a revisión.' });
+    }
+
+    const expediente_id = Number(req.params.id);
     const pool = await getPool();
 
     await pool.request()
       .input('expediente_id', sql.Int, expediente_id)
-      .input('nuevo_estado', sql.NVarChar(20), 'EN_REVISION')
+      .input('nuevo_estado', sql.NVarChar(20), 'REVISION')
       .input('razon_rechazo', sql.NVarChar(500), null)
       .input('actualizado_por', sql.Int, req.user.id)
       .execute('dicri.usp_UpdateExpedienteEstado');
@@ -78,40 +114,95 @@ exports.submitForReview = async (req, res, next) => {
   }
 };
 
-// Aprobar expediente
+// FUNCION INTERNA: valida que expediente esté en REVISION
+const ensureExpedienteEnRevision = async (pool, id) => {
+  const estadoResult = await pool.request()
+    .input('expediente_id', sql.Int, id)
+    .execute('dicri.usp_GetExpedienteEstado'); // SP que devuelve { estado }
+
+  const estadoActual = estadoResult.recordset?.[0]?.estado;
+  return estadoActual ? String(estadoActual).toLowerCase() === 'revision' : false;
+};
+
+// APROBAR expediente (solo coordinador y solo si estado == REVISION)
 exports.approveExpediente = async (req, res, next) => {
   try {
-    const expediente_id = parseInt(req.params.id, 10);
+    const userRole = (req.user?.rol || '').toLowerCase();
+    if (userRole !== 'coordinador') {
+      return res.status(403).json({ message: 'Solo coordinadores pueden aprobar expedientes.' });
+    }
+
+    const id = Number(req.params.id);
     const pool = await getPool();
 
+    const enRevision = await ensureExpedienteEnRevision(pool, id);
+    if (!enRevision) {
+      return res.status(400).json({ message: 'El expediente aún no está en revisión.' });
+    }
+
     await pool.request()
-      .input('expediente_id', sql.Int, expediente_id)
+      .input('expediente_id', sql.Int, id)
       .input('nuevo_estado', sql.NVarChar(20), 'APROBADO')
       .input('razon_rechazo', sql.NVarChar(500), null)
       .input('actualizado_por', sql.Int, req.user.id)
+      .input('coordinador_id', sql.Int, req.user.id) // <= nuevo input
       .execute('dicri.usp_UpdateExpedienteEstado');
 
-    res.json({ message: 'Expediente aprobado' });
+    res.json({ message: 'Expediente aprobado.' });
   } catch (err) {
     next(err);
   }
 };
 
-// Rechazar expediente
+// RECHAZAR expediente (solo coordinador y solo si estado == REVISION)
 exports.rejectExpediente = async (req, res, next) => {
   try {
-    const expediente_id = parseInt(req.params.id, 10);
-    const { razon_rechazo } = req.body;
+    const userRole = (req.user?.rol || '').toLowerCase();
+    if (userRole !== 'coordinador') {
+      return res.status(403).json({ message: 'Solo coordinadores pueden rechazar expedientes.' });
+    }
+
+    const id = Number(req.params.id);
+    const { razon_rechazo } = req.body || {};
+
     const pool = await getPool();
+    const enRevision = await ensureExpedienteEnRevision(pool, id);
+    if (!enRevision) {
+      return res.status(400).json({ message: 'El expediente aún no está en revisión.' });
+    }
+
+    if (!razon_rechazo || !razon_rechazo.trim()) {
+      return res.status(400).json({ message: 'Se requiere justificación para rechazar.' });
+    }
 
     await pool.request()
-      .input('expediente_id', sql.Int, expediente_id)
+      .input('expediente_id', sql.Int, id)
       .input('nuevo_estado', sql.NVarChar(20), 'RECHAZADO')
       .input('razon_rechazo', sql.NVarChar(500), razon_rechazo)
       .input('actualizado_por', sql.Int, req.user.id)
+      .input('coordinador_id', sql.Int, req.user.id) // <= nuevo input
       .execute('dicri.usp_UpdateExpedienteEstado');
 
-    res.json({ message: 'Expediente rechazado' });
+    res.json({ message: 'Expediente rechazado.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// UPDATE REVISION (mantener SP existente) - lo dejamos como operación administrativa
+exports.updateRevision = async (req, res, next) => {
+  try {
+    const { estado, justificacion } = req.body;
+    const id = Number(req.params.id);
+
+    const pool = await getPool();
+    const result = await pool.request()
+      .input('expediente_id', sql.Int, id)
+      .input('estado', sql.NVarChar(20), estado)
+      .input('justificacion', sql.NVarChar(500), justificacion || null)
+      .execute('dicri.usp_UpdateExpedienteRevision');
+
+    res.json({ message: 'Expediente actualizado', updated: result.rowsAffected[0] });
   } catch (err) {
     next(err);
   }
