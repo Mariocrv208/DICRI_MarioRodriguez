@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./dicriBack
+    container_name: dicri_backend
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./dicriBack:/app
+      - /app/node_modules
+    env_file:
+      - ./dicriBack/.env
+    depends_on:
+      - sqlserver
+
+  backend_tests:
+    build: ./dicriBack
+    container_name: dicri_backend_tests
+    env_file:
+      - ./dicriBack/.env
+    depends_on:
+      - sqlserver
+    command: sh -c "npm test"
+
+  frontend:
+    build: ./dicriFront
+    container_name: dicri_frontend
+    ports:
+      - "3000:5173"
+    volumes:
+      - ./dicriFront:/app
+      - /app/node_modules
+    env_file:
+      - ./dicriFront/.env
+    depends_on:
+      - backend
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: dicri_sqlserver
+    environment:
+      SA_PASSWORD: "MiP@ssw0rd123"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"

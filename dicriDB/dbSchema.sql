@@ -1,6 +1,6 @@
 -- 0_schema_modificado.sql
-CREATE DATABASE dicri_db2;
-GO
+-- CREATE DATABASE dicri_db2;
+-- GO
 USE dicri_db2;
 GO
 
@@ -36,7 +36,7 @@ CREATE TABLE dicri2.Indicio (
     expediente_id INT NOT NULL,
     descripcion NVARCHAR(500) NOT NULL,
     color NVARCHAR(100) NULL,
-    [tamaño] NVARCHAR(100) NULL,
+    [tamaï¿½o] NVARCHAR(100) NULL,
     peso DECIMAL(10,2) NULL,
     ubicacion NVARCHAR(255) NULL,
     tecnico_id INT NOT NULL,
@@ -45,7 +45,7 @@ CREATE TABLE dicri2.Indicio (
     CONSTRAINT FK_Indicio_Tecnico FOREIGN KEY (tecnico_id) REFERENCES dicri2.Usuario(id)
 );
 
--- Índices opcionales para optimizar búsquedas por estado
+-- ï¿½ndices opcionales para optimizar bï¿½squedas por estado
 CREATE INDEX IX_Expediente_Estado ON dicri2.Expediente(estado);
 CREATE INDEX IX_Indicio_Expediente ON dicri2.Indicio(expediente_id);
 GO
@@ -58,26 +58,6 @@ ALTER TABLE dicri2.Expediente
 ADD CONSTRAINT FK_Expediente_Coordinador FOREIGN KEY (coordinador_id)
 REFERENCES dicri2.Usuario(id);
 
-
-ALTER PROCEDURE dicri2.usp_InsertExpediente 
-    @codigo_unico NVARCHAR(50),
-    @descripcion NVARCHAR(500),
-    @tecnico_id INT
-AS
-BEGIN
-    -- VALIDAR DUPLICADO
-    IF EXISTS (SELECT 1 FROM dicri2.Expediente WHERE codigo_unico = @codigo_unico)
-    BEGIN
-        RAISERROR('EXPEDIENTE_DUPLICADO', 16, 1);
-        RETURN;
-    END
-
-    INSERT INTO dicri2.Expediente (codigo_unico, descripcion, tecnico_id)
-    VALUES (@codigo_unico, @descripcion, @tecnico_id);
-
-    SELECT SCOPE_IDENTITY() AS expediente_id;
-END
-GO
 
 
 

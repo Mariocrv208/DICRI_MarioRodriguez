@@ -20,6 +20,14 @@ SET password_hash = '$2b$10$FTBBbbX2vrDZbr1pcXSm/.gWfRlqXUBCmpuVWqll6g9AYQpBMeT5
 WHERE correo = 'coord@demo.com';
 
 
+ALTER LOGIN sa WITH PASSWORD = 'MiP@ssw0rd123';
+GO
+ALTER LOGIN sa ENABLE;
+GO
+USE dicri_db2;
+GO
+SELECT name, create_date FROM sys.databases;
+GO
 
 
 

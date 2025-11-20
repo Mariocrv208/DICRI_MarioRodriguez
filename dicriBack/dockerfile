@@ -1,0 +1,17 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copiamos package.json y package-lock.json para instalar dependencias primero
+COPY package*.json ./
+
+RUN npm install
+RUN npm install -g nodemon
+
+# Copiamos el resto del código
+COPY . .
+
+EXPOSE 4000
+
+# Ejecutamos nodemon para desarrollo
+CMD ["nodemon", "src/server.js", "--legacy-watch"]

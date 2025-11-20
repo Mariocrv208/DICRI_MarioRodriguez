@@ -1,13 +1,15 @@
-const sql = require('mssql/msnodesqlv8');
+const sql = require('mssql');
 const dotenv = require('dotenv');
 dotenv.config();
 
 const config = {
-  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
   server: process.env.DB_HOST,
-  driver: "msnodesqlv8",
+  database: process.env.DB_NAME,
   options: {
-    trustedConnection: true,  // Windows Authentication
+    encrypt: false, // para conexiones locales no necesitas encrypt
+    trustServerCertificate: true
   }
 };
 
@@ -16,8 +18,8 @@ let poolPromise = null;
 async function getPool() {
   if (!poolPromise) {
     try {
-      poolPromise = sql.connect(config);
-      console.log("Conexión exitosa a SQL Server con Windows Authentication");
+      poolPromise = await sql.connect(config);
+      console.log("Conexión exitosa a SQL Server desde otro contenedor");
     } catch (err) {
       console.error("Error conectando a SQL:", err);
       throw err;
