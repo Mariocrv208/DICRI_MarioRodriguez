@@ -1,0 +1,112 @@
+:root {
+  --bg: #0d1117;
+  --bg-card: #161b22;
+  --bg-hover: #1f2630;
+  --sidebar: #11151c;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --primary: #3b82f6;
+  --danger: #ef4444;
+  --success: #10b981;
+  --radius: 10px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", sans-serif;
+}
+
+input, textarea, select {
+  background: #1b1f27;
+  border: 1px solid #2a303b;
+  padding: .7rem;
+  border-radius: var(--radius);
+  color: var(--text);
+  width: 100%;
+}
+
+input:focus, textarea:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+button {
+  padding: .7rem 1rem;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  background: var(--primary);
+  color: white;
+}
+
+button:hover { opacity: .85; }
+
+.card {
+  background: var(--bg-card);
+  padding: 1rem;
+  border-radius: var(--radius);
+  margin-bottom: 1rem;
+  box-shadow: 0 0 8px rgba(0,0,0,.3);
+}
+
+.flex { display: flex; }
+.center { display: flex; justify-content: center; align-items: center; }
+.cursor { cursor: pointer; }
+.hover { transition: .2s; }
+.hover:hover { background: var(--bg-hover); }
+
+.grid { display: grid; gap: 1rem; }
+.grid-2 { grid-template-columns: 2fr 1fr; }
+
+.mt-1 { margin-top: 1rem; }
+.mt-2 { margin-top: 2rem; }
+
+/* ─────────────────────────────────────────────
+   UTILIDADES DE CENTRADO GLOBAL
+──────────────────────────────────────────────*/
+.center-all {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.center-vertical {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.center-horizontal {
+  display: flex;
+  justify-content: center;
+}
+
+.full-height {
+  height: 100%;
+}
+
+.full-page {
+  height: calc(100vh - 60px); /* Restando la navbar */
+}
+
+.gap-1 {
+  gap: 1rem;
+}
+
+.gap-2 {
+  gap: 2rem;
+}
+
+.inner-content {
+  padding: 1.5rem;
+  overflow-y: auto;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;   /* CENTRAR VERTICAL */
+  align-items: center;       /* CENTRAR HORIZONTAL */
+
+  width: 100%;
+  height: calc(100vh - 60px); /* sidebar left + navbar top compensados */
+}
